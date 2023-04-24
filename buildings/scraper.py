@@ -20,7 +20,11 @@ def parse_building_div(div_element):
 
     classroom_divs = div_element.find_all('div', {'class': 'views-field views-field-title'})
     for classroom_element in classroom_divs:
-        classrooms.append(re.search("\d+", classroom_element.span.a.string)[0])
+        # Try-catch required to retrieve facility IDs with a prepending letter, such as Scott Laboratory.
+        try:
+            classrooms.append(re.search("[a-zA-Z]\d+", classroom_element.span.a.string)[0])
+        except TypeError:
+            classrooms.append(re.search("\d+", classroom_element.span.a.string)[0])
 
     return {'building_name': building_name, 'classrooms': classrooms}
 

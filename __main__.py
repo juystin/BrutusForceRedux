@@ -11,13 +11,45 @@ building_scraper = buildings.Scraper(connectors.db.load_building_numbers())
 library_scraper = libraries.Scraper()
 
 user_input = None
+local = None
 
 class_list = []
 building_list = []
 library_list = []
 
-conn = connectors.db.create_connection()
-cursor = conn.cursor()
+while (user_input != "exit") and (user_input != "quit") and (user_input != "q"):
+    print("Choose your database type: ")
+    print("l/local: Creates a local sqlite3 file.")
+    print("r/remote: Writes to a remote database.")
+    print("exit/quit/q: Quits the program.")
+    print("-----------------------------------------------------")
+    user_input = input()
+    if (user_input == "local") or (user_input == "l"):
+        conn = connectors.db.create_local_connection()
+        cursor = conn.cursor()
+        local = True
+        break
+    if (user_input == "remote") or (user_input == "r"):
+        print("Enter username: ")
+        user = input()
+        print("Enter password: ")
+        password = input()
+        print("Enter host: ")
+        host = input()
+        print("Enter port: ")
+        port = input()
+        print("Enter database name: ")
+        db_name = input()
+        conn = connectors.db.create_remote_connection(user, password, host, port, db_name)
+        if not conn:
+            print("Could not connect")
+        else:
+            cursor = conn.cursor()
+            local = False
+            break
+    elif (user_input == "exit") or (user_input == "quit") or (user_input == "q"):
+        print("Goodbye!")
+        break
 
 while (user_input != "exit") and (user_input != "quit") and (user_input != "q"):
     print("Commands:  all: Runs all three scrapers.")
@@ -29,9 +61,14 @@ while (user_input != "exit") and (user_input != "quit") and (user_input != "q"):
     user_input = input()
 
     if user_input == "all":
+        print("Beginning all scrapers...")
         class_list = class_scraper.get_classes()
+        print("Finished scraping classes.")
         building_list = building_scraper.get_buildings()
+        print("Finished scraping buildings.")
         library_list = library_scraper.get_libraries()
+        print("Finished scraping libraries.")
+
         cursor.execute('''
         DROP TABLE if EXISTS classes
         ''')
@@ -62,6 +99,7 @@ while (user_input != "exit") and (user_input != "quit") and (user_input != "q"):
         (building_num text, library_name text, library_abbriev text, address text, lat text, lng text,
         hours text)
         ''')
+
         break
     elif (user_input == "class") or (user_input == "c"):
         class_list = class_scraper.get_classes()
@@ -106,41 +144,78 @@ while (user_input != "exit") and (user_input != "quit") and (user_input != "q"):
         print("Goodbye!")
         break
 
-for meeting in class_list:
-    if len(meeting) != 0:
-        cursor.execute('''
-        INSERT INTO classes
-        (building_num, class_title, class_desc, units, class_type, class_subject, 
-        class_number, facility_id, day, start_time, end_time, class_duration) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', [meeting["Building Number"], meeting["Class Title"], meeting["Class Description"], meeting["Units"],
-              meeting["Class Type"], meeting["Class Subject"], meeting["Class Number"], meeting["Facility ID"],
-              meeting["Day"], meeting["Start Time"], meeting["End Time"], meeting["Duration"]])
-        conn.commit()
+if (user_input != "exit") and (user_input != "quit") and (user_input != "q"):
+    print("Beginning populating database...")
 
-for building in building_list:
-    cursor.execute('''
-    INSERT INTO buildings (building_num, building_name, building_abbriev, address, lat, lng)
-    VALUES (?, ?, ?, ?, ?, ?)''', [building["buildingNumber"], building["name"], building["buildingCode"],
-                                   building["address"], building["latitude"], building["longitude"]])
-    try:
-        for classroom in building['classrooms']:
+    for meeting in class_list:
+        if len(meeting) != 0:
+            if local:
                 cursor.execute('''
-                    INSERT INTO classrooms (building_num, facility_id, building_name, classroom_number)
-                    VALUES (?, ?, ?, ?)''', [building["buildingNumber"], building["buildingCode"] + classroom.zfill(4), building["name"],
-                                             classroom])
-    except KeyError as e:
-        print("NO CLASSROOMS ERROR")
-        print(building)
+                INSERT INTO classes
+                (building_num, class_title, class_desc, units, class_type, class_subject, 
+                class_number, facility_id, day, start_time, end_time, class_duration) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', [meeting["Building Number"], meeting["Class Title"], meeting["Class Description"], meeting["Units"],
+                      meeting["Class Type"], meeting["Class Subject"], meeting["Class Number"], meeting["Facility ID"],
+                      meeting["Day"], meeting["Start Time"], meeting["End Time"], meeting["Duration"]])
+            elif not local:
+                cursor.execute('''
+                INSERT INTO classes
+                (building_num, class_title, class_desc, units, class_type, class_subject, 
+                class_number, facility_id, day, start_time, end_time, class_duration) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ''', (meeting["Building Number"], meeting["Class Title"], meeting["Class Description"],
+                      meeting["Units"],
+                      meeting["Class Type"], meeting["Class Subject"], meeting["Class Number"],
+                      meeting["Facility ID"],
+                      meeting["Day"], meeting["Start Time"], meeting["End Time"], meeting["Duration"]))
     conn.commit()
 
-for library in library_list:
-    cursor.execute('''
-        INSERT INTO libraries (building_num, library_name, library_abbriev, address, lat, lng, hours)
-        VALUES (?, ?, ?, ?, ?, ?, ?)''', [library["buildingNumber"], library["title"], library["code"],
-                                          library["address"], library["latitude"], library["longitude"],
-                                          library["hours"]])
+    for building in building_list:
+        if local:
+            cursor.execute('''
+            INSERT INTO buildings (building_num, building_name, building_abbriev, address, lat, lng)
+            VALUES (?, ?, ?, ?, ?, ?)''', [building["buildingNumber"], building["name"], building["buildingCode"],
+                                           building["address"], building["latitude"], building["longitude"]])
+        elif not local:
+            cursor.execute('''
+                    INSERT INTO buildings (building_num, building_name, building_abbriev, address, lat, lng)
+                    VALUES (%s, %s, %s, %s, %s, %s)''',
+                           (building["buildingNumber"], building["name"], building["buildingCode"],
+                            building["address"], building["latitude"], building["longitude"]))
+        try:
+            for classroom in building['classrooms']:
+                if local:
+                    cursor.execute('''
+                        INSERT INTO classrooms (building_num, facility_id, building_name, classroom_number)
+                        VALUES (?, ?, ?, ?)''', [building["buildingNumber"], building["buildingCode"] + classroom.zfill(4), building["name"],
+                                                 classroom])
+                elif not local:
+                    cursor.execute('''
+                        INSERT INTO classrooms (building_num, facility_id, building_name, classroom_number)
+                        VALUES (%s, %s, %s, %s)''', (building["buildingNumber"], building["buildingCode"] + classroom.zfill(4),
+                        building["name"], classroom))
+        except KeyError as e:
+            print("NO CLASSROOMS ERROR")
+            print(building)
     conn.commit()
 
-cursor.close()
-conn.close()
+    for library in library_list:
+        if local:
+            cursor.execute('''
+                INSERT INTO libraries (building_num, library_name, library_abbriev, address, lat, lng, hours)
+                VALUES (?, ?, ?, ?, ?, ?, ?)''', [library["buildingNumber"], library["title"], library["code"],
+                                                  library["address"], library["latitude"], library["longitude"],
+                                                  library["hours"]])
+        elif not local:
+            cursor.execute('''
+                INSERT INTO libraries (building_num, library_name, library_abbriev, address, lat, lng, hours)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)''', (library["buildingNumber"], library["title"], library["code"],
+                                                      library["address"], library["latitude"], library["longitude"],
+                                                      library["hours"]))
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    print("Finished populating database.")

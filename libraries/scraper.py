@@ -1,5 +1,7 @@
 import requests
 
+from tqdm import tqdm
+
 API_LINK = "https://content.osu.edu/v2/library/locations"
 
 
@@ -15,7 +17,7 @@ class Scraper:
         library_list = []
 
         response = get_response()
-        for library in response["data"]["locations"]:
+        for library in tqdm(response["data"]["locations"], desc="Parsing libraries..."):
             if library["isOnMainCampus"] == self.is_on_main_campus:
                 library_list.append(library)
 

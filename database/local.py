@@ -152,6 +152,17 @@ class LocalSql:
                                                     library["hours"]])
         self.conn.commit()
 
+    def remove_class_redundancies(self):
+
+        self.cursor.execute('''
+            DELETE FROM classes
+            WHERE rowid NOT IN (SELECT min(rowid)
+            FROM classes
+            GROUP BY class_number, section_number, monday, tuesday, wednesday, thursday, friday, facility_id)
+        ''')
+
+        self.conn.commit()
+
     def close(self):
         self.cursor.close()
         self.conn.close()

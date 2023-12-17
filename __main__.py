@@ -90,7 +90,13 @@ while (user_input != "exit") and (user_input != "quit") and (user_input != "q"):
     print("------------------------------------------------------")
     user_input = input()
 
+    redundancy = True
+
     if user_input == "all":
+        print("Run a redundancy check? (Y/n): ")
+        user_input = input()
+        if (user_input == "n"):
+            redundancy = False
         print("\nBeginning all scrapers...")
         class_list = class_scraper.get_classes()
         print("Finished scraping classes.")
@@ -126,7 +132,10 @@ while (user_input != "exit") and (user_input != "quit") and (user_input != "q"):
         print("\nBeginning class scraper...")
         class_list = class_scraper.get_classes()
         print("Finished scraping classes.")
-        
+        print("Run a redundancy check? (Y/n): ")
+        user_input = input()
+        if (user_input == "n"):
+            redundancy = False
         if user_storage == Storage.LOCAL:
             local_database.init_classes(classes_table_name)
             local_database.init_instructors(instructors_table_name)
@@ -178,6 +187,8 @@ if (user_input != "exit") and (user_input != "quit") and (user_input != "q"):
         local_database.insert_class_list(class_list)
         local_database.insert_building_list(building_list)
         local_database.insert_library_list(library_list)
+        if (redundancy):
+            local_database.remove_class_redundancies()
         local_database.close()
     elif user_storage == Storage.SQL:
         remote_database.insert_class_list(class_list)

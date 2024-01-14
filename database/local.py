@@ -23,7 +23,7 @@ class LocalSql:
         self.cursor.execute('''
         CREATE TABLE ''' + table_name + '''
         (building_num text, class_title text, class_desc text, units text, class_type text, class_subject text, 
-        class_code text, facility_id text, monday text, tuesday text, wednesday text, thursday text, friday text, 
+        class_code text, facility_id text, sunday text, monday text, tuesday text, wednesday text, thursday text, friday text, saturday text,
         start_time text, end_time text, class_duration text, class_number text, section_number text)
         ''')
         self.classes_table = table_name
@@ -73,13 +73,13 @@ class LocalSql:
                 self.cursor.execute('''
                 INSERT INTO ''' + self.classes_table + '''
                 (building_num, class_title, class_desc, units, class_type, class_subject, 
-                class_code, facility_id, monday, tuesday, wednesday, thursday, friday, 
+                class_code, facility_id, sunday, monday, tuesday, wednesday, thursday, friday, saturday,
                 start_time, end_time, class_duration, class_number, section_number) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', [meeting["Building Number"], meeting["Class Title"], meeting["Class Description"], meeting["Units"],
                     meeting["Class Type"], meeting["Class Subject"], meeting["Class Code"], meeting["Facility ID"],
-                    "monday" in meeting["Days"], "tuesday" in meeting["Days"], "wednesday" in meeting["Days"], "thursday" in meeting["Days"], 
-                    "friday" in meeting["Days"], meeting["Start Time"], meeting["End Time"], meeting["Duration"],
+                    "sunday" in meeting["Days"], "monday" in meeting["Days"], "tuesday" in meeting["Days"], "wednesday" in meeting["Days"], "thursday" in meeting["Days"],
+                    "friday" in meeting["Days"], "saturday" in meeting["Days"], meeting["Start Time"], meeting["End Time"], meeting["Duration"],
                     meeting["Class Number"], meeting["Section Number"]])
                 for instructor in tqdm(meeting["Instructors"], desc="Inserting instructors...", position=1, leave=False):
                     self.cursor.execute('''

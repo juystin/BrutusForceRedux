@@ -12,10 +12,12 @@ BASE_API_LINK = "https://content.osu.edu/v2/classes/search?q="
 # API is buggy when sorting by relevance (default) and sorting by catalog number.
 BASE_PARAMS = {
     "p": "1",
-    "term": "1238",
+    "term": "1242",
     "campus": "col",
     "sort": "subject"
 }
+
+DAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
 
 def convert_to_24_hr(time):
     if time is None:
@@ -104,11 +106,11 @@ def parse_response(params, building_nums):
                     end_time = convert_to_24_hr(meeting["endTime"])
                     days = []
                     instructors = []
-                    if any(meeting[day] for day in ["monday", "tuesday", "wednesday", "thursday", "friday"]):
+                    if any(meeting[day] for day in DAYS):
                         for instructor in meeting["instructors"]:
                             instructors.append({"name": instructor["displayName"], "email": instructor["email"]})
 
-                    for day in ["monday", "tuesday", "wednesday", "thursday", "friday"]:
+                    for day in DAYS:
                         if meeting[day]:
                             days.append(day)
 

@@ -29,7 +29,7 @@ print("  ######## ######  ##          ##      ##  ##      ##  ##          ##")
 print("    ####### #####  ##          ##      ##  ##      ##  ##          ##")
 print("      #### ####    ##          ##########  ##      ##  ##########  #########\n")
 
-class_scraper = classes.Scraper(resources.building_numbers_input.load_from_file())
+class_scraper = classes.Scraper()
 building_scraper = buildings.Scraper(resources.building_numbers_input.load_from_file())
 library_scraper = libraries.Scraper()
 

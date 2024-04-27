@@ -69,7 +69,7 @@ class LocalSql:
         classrooms = []
 
         if len(class_list) > 0:
-            for meeting in tqdm(class_list, desc="Inserting classes...", position=0):              
+            for meeting in tqdm(class_list, desc="Inserting classes...", position=0):          
                 self.cursor.execute('''
                 INSERT INTO ''' + self.classes_table + '''
                 (building_num, class_title, class_desc, units, class_type, class_subject, 
